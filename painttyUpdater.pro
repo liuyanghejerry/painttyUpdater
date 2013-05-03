@@ -8,7 +8,7 @@ QT       += core gui network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = painttyUpdater
+TARGET = updater
 TEMPLATE = app
 
 CONFIG += c++11
@@ -23,4 +23,3 @@ HEADERS  += \
     network/socket.h \
     updater.h
 
-FORMS    +=
