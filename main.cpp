@@ -18,8 +18,8 @@ void initTranslation()
 
 int main(int argc, char *argv[])
 {
-    Updater a(argc, argv);
+    QApplication a(argc, argv);
     initTranslation();
-    
+    Updater up;
     return a.exec();
 }

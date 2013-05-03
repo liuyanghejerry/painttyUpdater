@@ -4,12 +4,12 @@
 #include <QApplication>
 class Socket;
 
-class Updater : public QApplication
+class Updater : public QObject
 {
     Q_OBJECT
     
 public:
-    Updater(int & argc, char ** argv);
+    Updater();
     void checkNewestVersion();
     bool download();
     bool overlap();

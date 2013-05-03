@@ -10,8 +10,7 @@
 #include "network/socket.h"
 
 
-Updater::Updater(int & argc, char ** argv) :
-    QApplication(argc, argv),
+Updater::Updater() :
     socket(new Socket(this)),
     state_(State::READY)
 {
@@ -57,7 +56,7 @@ void Updater::checkNewestVersion()
         }
 
         qDebug()<<socket->errorString();
-        exit(1);
+        qApp->exit(1);
     });
     connect(socket, &Socket::newData,
             [this](const QByteArray& data){
@@ -66,13 +65,13 @@ void Updater::checkNewestVersion()
         if(obj.isEmpty()){
             state_ = State::CHK_ERROR;
             qDebug()<<"Check version error!";
-            exit(1);
+            qApp->exit(1);
         }
         QJsonObject info = obj.value("info").toObject();
         if(info.isEmpty()){
             state_ = State::CHK_ERROR;
             qDebug()<<"Check version error!";
-            exit(1);
+            qApp->exit(1);
         }
 
         // close connection right after we have the result.
@@ -99,13 +98,13 @@ void Updater::checkNewestVersion()
         if(index < 0 || index >= commandList.count()){
             qDebug()<<"parsing error!"<<"cannot find --version or -v";
             printUsage();
-            exit(1);
+            qApp->exit(1);
         }
         QString old_version = commandList[index+1].trimmed();
         if(old_version.isEmpty()){
             qDebug()<<"parsing error!"<<"version number is empty";
             printUsage();
-            exit(1);
+            qApp->exit(1);
         }
         if(version != old_version){
             QMessageBox msgBox;
@@ -126,7 +125,7 @@ void Updater::checkNewestVersion()
             }
 
             msgBox.exec();
-            exit(0);
+            qApp->exit(0);
         }
 
     });
