@@ -15,7 +15,7 @@ Updater::Updater(int & argc, char ** argv) :
     socket(new Socket(this)),
     state_(State::READY)
 {
-    //
+    checkNewestVersion();
 }
 
 Updater::~Updater()
@@ -51,7 +51,7 @@ void Updater::checkNewestVersion()
         }
 
         qDebug()<<socket->errorString();
-        qApp->exit(1);
+        exit(1);
     });
     connect(socket, &Socket::newData,
             [this](const QByteArray& data){
@@ -60,19 +60,27 @@ void Updater::checkNewestVersion()
         if(obj.isEmpty()){
             state_ = State::CHK_ERROR;
             qDebug()<<"Check version error!";
-            quit();
+            exit(1);
         }
         QJsonObject info = obj.value("info").toObject();
         if(info.isEmpty()){
             state_ = State::CHK_ERROR;
             qDebug()<<"Check version error!";
-            quit();
+            exit(1);
         }
+
+        // close connection right after we have the result.
+        socket->close();
+
         QString version = info.value("version").toString().trimmed();
         QString changelog = info.value("changelog").toString();
         int level = info.value("level").toDouble();
+
+        // try to use url fetched from remote server
         QUrl url = QUrl::fromUserInput(DOWNLOAD_URL);
         QString fetched_url = info.value("url").toString();
+
+        // if we cannot get a valid url, use predefined url
         if(!fetched_url.isEmpty()){
             url = QUrl::fromUserInput(fetched_url);
         }
@@ -85,17 +93,17 @@ void Updater::checkNewestVersion()
         if(index < 0 || index >= commandList.count()){
             qDebug()<<"parsing error!"<<"cannot find --version or -v";
             printUsage();
-            quit();
+            exit(1);
         }
         QString old_version = commandList[index+1].trimmed();
         if(old_version.isEmpty()){
             qDebug()<<"parsing error!"<<"version number is empty";
             printUsage();
-            quit();
+            exit(1);
         }
         if(version != old_version){
             QMessageBox msgBox;
-            msgBox.setText(tr("New version!"));
+            msgBox.setWindowTitle(tr("New version!"));
             if(level < 3) {
                 msgBox.setIcon(QMessageBox::Information);
                 msgBox.setText(tr("There's a new version of Mr.Paint.\n"
@@ -110,8 +118,9 @@ void Updater::checkNewestVersion()
             if(!changelog.isEmpty()){
                 msgBox.setDetailedText(changelog);
             }
+
             msgBox.exec();
-            quit();
+            exit(0);
         }
 
     });
@@ -122,11 +131,13 @@ void Updater::checkNewestVersion()
 
 bool Updater::download()
 {
+    // TODO: auto download the new version
     return false;
 }
 
 bool Updater::overlap()
 {
+    // TODO: overlap the old version
     return false;
 }
 

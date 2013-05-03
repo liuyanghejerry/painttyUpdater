@@ -23,3 +23,8 @@ HEADERS  += \
     network/socket.h \
     updater.h
 
+OTHER_FILES +=
+
+RESOURCES += \
+    resources.qrc
+
