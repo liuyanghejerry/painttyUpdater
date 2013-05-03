@@ -1,10 +1,10 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QGuiApplication>
+#include <QApplication>
 class Socket;
 
-class Updater : public QGuiApplication
+class Updater : public QApplication
 {
     Q_OBJECT
     

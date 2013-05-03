@@ -11,15 +11,16 @@
 
 
 Updater::Updater(int & argc, char ** argv) :
-    QGuiApplication(argc, argv),
+    QApplication(argc, argv),
     socket(new Socket(this)),
     state_(State::READY)
 {
-    checkNewestVersion();
+    //
 }
 
 Updater::~Updater()
 {
+    socket->close();
 }
 
 void Updater::checkNewestVersion()
@@ -50,6 +51,7 @@ void Updater::checkNewestVersion()
         }
 
         qDebug()<<socket->errorString();
+        qApp->exit(1);
     });
     connect(socket, &Socket::newData,
             [this](const QByteArray& data){

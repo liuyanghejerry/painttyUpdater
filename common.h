@@ -2,8 +2,8 @@
 #define COMMON_H
 #include <QtGlobal>
 
-//static const char* SERVER_ADDRESS = "106.187.92.58";
-static const char* SERVER_ADDRESS = "127.0.0.1";
+static const char* SERVER_ADDRESS = "106.187.92.58";
+//static const char* SERVER_ADDRESS = "127.0.0.1";
 static const int SERVER_PORT = 7071;
 static const char* VERSION = "0.1";
 
