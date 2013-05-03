@@ -108,17 +108,19 @@ void Updater::checkNewestVersion()
         }
         if(version != old_version){
             QMessageBox msgBox;
+            msgBox.setTextFormat(Qt::RichText);
             msgBox.setWindowTitle(tr("New version!"));
             if(level < 3) {
                 msgBox.setIcon(QMessageBox::Information);
                 msgBox.setText(tr("There's a new version of Mr.Paint.\n"
-                                  "We suggest you download it here: %1")
-                               .arg(url.toDisplayString()));
+                                  "We suggest you download it <a href='%1'>here</a>.")
+                               .arg(url.toString()));
             }else{
                 msgBox.setIcon(QMessageBox::Warning);
                 msgBox.setText(tr("There's a critical update of Mr.Paint.\n"
-                                  "You can connect to server ONLY if you've updated: %1")
-                               .arg(url.toDisplayString()));
+                                  "You can connect to server "
+                                  "ONLY if you've <a href='%1'>updated</a>!")
+                               .arg(url.toString()));
             }
             if(!changelog.isEmpty()){
                 msgBox.setDetailedText(changelog);
