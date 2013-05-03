@@ -30,7 +30,13 @@ void Updater::checkNewestVersion()
         state_ = State::CHK_VERSION;
         QJsonDocument doc;
         QJsonObject obj;
-        obj.insert("request", QJsonValue(QString("check")));
+        obj.insert("request", QString("check"));
+        // NOTICE: to ensure no ambigous,
+        // all JSON should be in lower case
+        QString locale = QLocale(QLocale::system().uiLanguages().at(0))
+                .name().toLower();
+        obj.insert("language", locale);
+        obj.insert("platform", QString("windows x86"));
         doc.setObject(obj);
         socket->sendData(doc.toJson());
     });
