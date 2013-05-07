@@ -23,7 +23,11 @@ HEADERS  += \
     network/socket.h \
     updater.h
 
-OTHER_FILES +=
+TRANSLATIONS += translation/updater_zh_CN.ts \ #Simplified Chinese
+    translation/updater_zh_TW.ts \ #Traditional Chinese
+#    translation/updater_zh_HK.ts \
+#    translation/updater_zh_MO.ts
+    translation/updater_ja.ts #Japanese
 
 RESOURCES += \
     resources.qrc
