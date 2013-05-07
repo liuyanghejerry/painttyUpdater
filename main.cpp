@@ -7,15 +7,14 @@
 void initTranslation()
 {
     QString locale = QLocale(QLocale::system().uiLanguages().at(0)).name();
-    qDebug()<<locale;
 
     QTranslator *qtTranslator = new QTranslator(qApp);
-    qDebug()<<qtTranslator->load(QString("qt_%1").arg(locale), ":/translation", "_", ".qm");
-    qDebug()<<QCoreApplication::installTranslator(qtTranslator);
+    qtTranslator->load(QString("qt_%1").arg(locale), ":/translation", "_", ".qm");
+    QCoreApplication::installTranslator(qtTranslator);
 
     QTranslator *myappTranslator = new QTranslator(qApp);
-    qDebug()<<myappTranslator->load(QString("updater_%1").arg(locale), ":/translation", "_", ".qm");
-    qDebug()<<QCoreApplication::installTranslator(myappTranslator);
+    myappTranslator->load(QString("updater_%1").arg(locale), ":/translation", "_", ".qm");
+    QCoreApplication::installTranslator(myappTranslator);
 }
 
 int main(int argc, char *argv[])
