@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include "common.h"
 #include "network/socket.h"
+#include "network/localnetworkinterface.h"
 
 
 Updater::Updater() :
@@ -82,7 +83,7 @@ void Updater::checkNewestVersion()
         int level = info.value("level").toDouble();
 
         // try to use url fetched from remote server
-        QUrl url = QUrl::fromUserInput(DOWNLOAD_URL);
+        QUrl url = QUrl::fromUserInput(GlobalDef::DOWNLOAD_URL);
         QString fetched_url = info.value("url").toString();
 
         // if we cannot get a valid url, use predefined url
@@ -131,7 +132,16 @@ void Updater::checkNewestVersion()
         }
 
     });
-    socket->connectToHost(QHostAddress(SERVER_ADDRESS), SERVER_PORT);
+    //
+    QHostAddress addr;
+    if(LocalNetworkInterface::supportIpv6()){
+        addr = GlobalDef::HOST_ADDR[1];
+        qDebug()<<"using ipv6 address to connect server";
+    }else{
+        addr = GlobalDef::HOST_ADDR[0];
+        qDebug()<<"using ipv4 address to connect server";
+    }
+    socket->connectToHost(addr, GlobalDef::HOST_UPDATER_PORT);
 
     return;
 }
@@ -150,7 +160,7 @@ bool Updater::overlap()
 
 void Updater::printUsage()
 {
-    qDebug()<<"painttyUpdater "<<VERSION<<endl
+    qDebug()<<"painttyUpdater "<<GlobalDef::VERSION<<endl
            <<"Usage: "<<"painttyUpdater OPTIONS"<<endl<<endl
           <<"-v, --version VERSION: tell updater the current "
             "version of main program.";

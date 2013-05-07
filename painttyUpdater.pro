@@ -16,12 +16,14 @@ CONFIG += c++11
 
 SOURCES += main.cpp\
     network/socket.cpp \
-    updater.cpp
+    updater.cpp \
+    network/localnetworkinterface.cpp
 
 HEADERS  += \
     common.h \
     network/socket.h \
-    updater.h
+    updater.h \
+    network/localnetworkinterface.h
 
 TRANSLATIONS += translation/updater_zh_CN.ts \ #Simplified Chinese
     translation/updater_zh_TW.ts \ #Traditional Chinese
