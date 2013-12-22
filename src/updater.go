@@ -17,12 +17,16 @@ import (
     "easycp"
     "platform"
     "language"
+    "ipv6support"
+    "projectconst"
 )
 
-const SERVER_ADDR_IPV4 = "http://localhost:17979"
-const SERVER_ADDR_IPV6 = "http://localhost:17979"
-const DEFAULT_NEW_PACKAGE = "http://download.mrspaint.com/0.4/%E8%8C%B6%E7%BB%98%E5%90%9B_Alpha_x86.zip"
-const UPDATER_VER uint64 = 20
+const (
+    SERVER_ADDR_IPV4 = projectconst.SERVER_ADDR_IPV4
+    SERVER_ADDR_IPV6 = projectconst.SERVER_ADDR_IPV6
+    DEFAULT_NEW_PACKAGE = projectconst.DEFAULT_NEW_PACKAGE
+    UPDATER_VER uint64 = projectconst.UPDATER_VER
+)
 
 type VersionCheckReq struct {
     Request  string `json:"request"`
@@ -175,7 +179,13 @@ func check() (bool, string, error) {
 
     var jsonPkg bytes.Buffer
     json.Compact(&jsonPkg, jsonRequest)
-    resp, err := http.Post(SERVER_ADDR_IPV4, "application/json", &jsonPkg)
+    var addr string
+    if ipv6support.IsIPv6Supported() {
+        addr = SERVER_ADDR_IPV6
+    } else {
+        addr = SERVER_ADDR_IPV4
+    }
+    resp, err := http.Post(addr, "application/json", &jsonPkg)
     if err != nil {
         log.Panicln("error when post")
         return false, "", err
