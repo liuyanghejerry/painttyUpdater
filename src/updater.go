@@ -118,55 +118,56 @@ func queryLanguage() string {
 	return language.GetSystemLanguage()
 }
 
-func complete() error {
+// bool indicates whether should we go further
+func complete() (bool, error) {
 	r := flag.String("i", "", "path to original updater")
 	p := flag.Uint64("p", 0, "pid to original updater")
 	flag.Parse()
 
 	if *p <= 0 {
-		return nil
+		return true, nil
 	}
 
 	old_proc, err := os.FindProcess(int(*p))
 
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	err = old_proc.Kill()
 
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	if len(*r) <= 0 {
-		return nil
+		return false, nil
 	}
 
 	info, err := os.Stat(*r)
 	if err != nil || !info.IsDir() {
-		return err
+		return false, err
 	}
 
 	current_path, err := osext.ExecutableFolder()
 
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	info, err = os.Stat(current_path)
 
 	if err != nil || !info.IsDir() {
-		return err
+		return false, err
 	}
 
 	result := CopyDir(current_path, *r)
 
 	if !result {
-		return CopyFailedError{"Cannot copy files from " + current_path + " to " + *r}
+		return false, CopyFailedError{"Cannot copy files from " + current_path + " to " + *r}
 	}
 
-	return nil
+	return false, nil
 }
 
 func check() (bool, string, error) {
@@ -284,7 +285,10 @@ func start(src string) bool {
 }
 
 func main() {
-	_ = complete()
+	next, _ := complete()
+	if !next {
+		return
+	}
 	next, addr, err := check()
 	if err != nil {
 		log.Panicln("check failed")
