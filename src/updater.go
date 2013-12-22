@@ -19,6 +19,7 @@ import (
 	"projectconst"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -269,8 +270,18 @@ func install(dest string) error {
 	if err != nil {
 		return err
 	}
+
+	// wait 30 sec at most and killed
+	go func() {
+		time.Sleep(time.Second * 30)
+		if prcs != nil {
+			_ = prcs.Kill()
+		}
+	}()
+
 	// if everything goes smooth, updater will be killed before Wait() returns
 	_, err = prcs.Wait()
+
 	return err
 }
 
