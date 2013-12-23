@@ -1,12 +1,15 @@
 package ipv6support
 
-import "net"
+//import "net"
+import "net/http"
 import "projectconst"
 
 func IsIPv6Supported() bool {
-	addrs, err := net.LookupIP(projectconst.SERVER_HOST_IPV6)
-	if len(addrs) < 1 || err != nil {
+	_, err := http.Get(projectconst.SERVER_ADDR_IPV6)
+
+	if err != nil {
 		return false
 	}
+
 	return true
 }

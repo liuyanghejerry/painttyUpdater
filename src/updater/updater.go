@@ -188,6 +188,7 @@ func check() (bool, string, error) {
 	}
 	resp, err := http.Post(addr, "application/json", &jsonPkg)
 	if err != nil {
+		log.Println(err)
 		log.Panicln("error when post")
 		return false, "", err
 	}
