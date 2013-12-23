@@ -13,13 +13,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"osext"
 	"path/filepath"
 	"platform"
 	"projectconst"
 	"strconv"
 	"strings"
-	"time"
+	//"time"
 )
 
 const (
@@ -28,6 +29,10 @@ const (
 	DEFAULT_NEW_PACKAGE        = projectconst.DEFAULT_NEW_PACKAGE
 	UPDATER_VER         uint64 = projectconst.UPDATER_VER
 )
+
+var to_be_killed uint64
+var to_be_installed string
+var last_version uint64
 
 type VersionCheckReq struct {
 	Request  string `json:"request"`
@@ -101,9 +106,7 @@ func CopyDir(src string, dest string) bool {
 }
 
 func oldVersion() uint64 {
-	v := flag.Uint64("v", 40, "current version, unsigned integer")
-	flag.Parse()
-	return *v
+	return last_version
 }
 
 func queryPlatform() string {
@@ -121,51 +124,66 @@ func queryLanguage() string {
 
 // bool indicates whether should we go further
 func complete() (bool, error) {
-	r := flag.String("i", "", "path to original updater")
-	p := flag.Uint64("p", 0, "pid to original updater")
-	flag.Parse()
-
-	if *p <= 0 {
+	if to_be_killed <= 0 || len(to_be_installed) <= 0 {
 		return true, nil
 	}
 
-	old_proc, err := os.FindProcess(int(*p))
+	old_proc, err := os.FindProcess(int(to_be_killed))
 
 	if err != nil {
+		log.Println(err)
 		return false, err
 	}
 
 	err = old_proc.Kill()
 
 	if err != nil {
+		log.Println(err)
 		return false, err
 	}
 
-	if len(*r) <= 0 {
+	if len(to_be_installed) <= 0 {
 		return false, nil
 	}
 
-	info, err := os.Stat(*r)
+	// NOTE: to_be_installed is surrounded by quotes
+	// to_be_installed = strings.Replace(to_be_installed, "\"", "", -1)
+	to_be_installed = to_be_installed[1:len(to_be_installed)-1]
+
+	info, err := os.Stat(to_be_installed)
 	if err != nil || !info.IsDir() {
+		log.Println(err)
 		return false, err
 	}
 
 	current_path, err := osext.ExecutableFolder()
 
 	if err != nil {
+		log.Println(err)
 		return false, err
 	}
 
 	info, err = os.Stat(current_path)
 
 	if err != nil || !info.IsDir() {
+		log.Println(err)
 		return false, err
 	}
 
-	result := CopyDir(current_path, *r)
+	log.Println("copying ", current_path, " to ", to_be_installed)
+
+	result := CopyDir(current_path, to_be_installed)
 
 	if !result {
-		return false, CopyFailedError{"Cannot copy files from " + current_path + " to " + *r}
+		return false, CopyFailedError{
+			"Cannot copy files from " + current_path + " to " + to_be_installed}
+	}
+
+	b := start(to_be_installed)
+
+	if !b {
+		log.Println("start new MrPaint failed")
+		// return false, nil
 	}
 
 	return false, nil
@@ -189,21 +207,21 @@ func check() (bool, string, error) {
 	resp, err := http.Post(addr, "application/json", &jsonPkg)
 	if err != nil {
 		log.Println(err)
-		log.Panicln("error when post")
+		log.Println("error when post")
 		return false, "", err
 	}
 
 	respBody, err := ioutil.ReadAll(resp.Body)
 	resp.Body.Close()
 	if err != nil {
-		log.Panicln("error while read response")
+		log.Println("error while read response")
 		return false, "", err
 	}
 
 	var version_info VersionCheckRes
 	err = json.Unmarshal(respBody, &version_info)
 	if err != nil {
-		log.Panicln("error when unmarshal")
+		log.Println("error when unmarshal")
 		return false, "", err
 	}
 	log.Println(version_info.Info)
@@ -227,19 +245,19 @@ func check() (bool, string, error) {
 func download(address string) (bool, *os.File, error) {
 	res, err := http.Get(address)
 	if err != nil {
-		log.Panicln("failed to download new package")
+		log.Println("failed to download new package")
 		return false, nil, err
 	}
 
 	data, err := ioutil.ReadAll(res.Body)
 	res.Body.Close()
 	if err != nil {
-		log.Panicln("failed to download new package")
+		log.Println("failed to download new package")
 		return false, nil, err
 	}
 	f, err := ioutil.TempFile("", "paintty_update_")
 	if err != nil {
-		log.Panicln("failed to write new package to disk")
+		log.Println("failed to write new package to disk")
 		return false, nil, err
 	}
 
@@ -258,42 +276,89 @@ func uncompress(file *os.File) (bool, string, error) {
 	return true, dir_name, nil
 }
 
-func install(dest string) error {
+func install(src string) error {
 	current_path, err := osext.ExecutableFolder()
 	if err != nil {
 		return err
 	}
-	s := string(os.PathSeparator)
-	new_updater := filepath.FromSlash(current_path + s + "updater")
-	pid := os.Getpid()
-	args := []string{"-i " + current_path + " ", "-p " + strconv.Itoa(pid) + " "}
-	prcs, err := os.StartProcess(new_updater, args, nil)
-	if err != nil {
-		return err
+
+	if to_be_killed != 0 {
+		old_proc, err := os.FindProcess(int(to_be_killed))
+
+		if err != nil {
+			return err
+		}
+
+		err = old_proc.Kill()
+
+		if err != nil {
+			return err
+		}
 	}
 
-	// wait 30 sec at most and killed
-	go func() {
-		time.Sleep(time.Second * 30)
-		if prcs != nil {
-			_ = prcs.Kill()
-		}
-	}()
+	s := string(os.PathSeparator)
+	new_updater := filepath.FromSlash(src + s + "updater.exe")
+	log.Println("new updater: ", new_updater)
+	pid := os.Getpid()
 
-	// if everything goes smooth, updater will be killed before Wait() returns
-	_, err = prcs.Wait()
+	cmd := exec.Command(new_updater, "-i", "\""+current_path+"\"", "-p", strconv.Itoa(pid))
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+
+	// args := []string{"-i", "\""+current_path+"\"", "-p", strconv.Itoa(pid)}
+	// log.Println("start cmd: ", args)
+	// var procAttr os.ProcAttr 
+ //    procAttr.Files = []*os.File{nil, nil, nil} 
+	// prcs, err := os.StartProcess(new_updater, args, &procAttr)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// // wait 30 sec at most and killed
+	// // go func() {
+	// // 	time.Sleep(time.Second * 30)
+	// // 	if prcs != nil {
+	// // 		_ = prcs.Kill()
+	// // 	}
+	// // }()
+
+	// // if everything goes smooth, updater will be killed before Wait() returns
+	// _, err = prcs.Wait()
 
 	return err
 }
 
 func start(src string) bool {
-	s := string(os.PathSeparator)
-	_, err := os.StartProcess(src+s+"MrPaint", []string{}, nil)
+	// _, err := os.StartProcess(src+"MrPaint.exe", []string{}, nil)
+	cmd := exec.Command(src+"MrPaint.exe")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err := cmd.Run()
 	if err != nil {
 		return false
 	}
 
 	return true
+}
+
+func init() {
+	i := flag.String("i", "", "path to original updater")
+	p := flag.Uint64("p", 0, "pid to original updater")
+	v := flag.Uint64("v", 40, "current version, unsigned integer")
+	flag.Parse()
+
+	to_be_installed = *i
+	to_be_killed = *p
+	last_version = *v
+
+	lf, err := os.OpenFile("./updater.log", os.O_APPEND|os.O_CREATE, 0755)
+	if err != nil {
+		log.Println(err)
+	}
+	log.SetOutput(lf)
+
+	log.Println("my cmd: ", to_be_installed, to_be_killed, last_version)
 }
 
 func main() {
@@ -303,8 +368,8 @@ func main() {
 	}
 	next, addr, err := check()
 	if err != nil {
-		log.Panicln("check failed")
-		log.Panicln(err)
+		log.Println("check failed")
+		log.Println(err)
 		return
 	}
 
@@ -316,12 +381,12 @@ func main() {
 
 	if f != nil {
 		defer f.Close()
-		defer os.Remove(f.Name())
+		// defer os.Remove(f.Name())
 	}
 
 	if err != nil {
-		log.Panicln("download failed")
-		log.Panicln(err)
+		log.Println("download failed")
+		log.Println(err)
 		return
 	}
 
@@ -335,8 +400,8 @@ func main() {
 	log.Println(file_path)
 
 	if err != nil {
-		log.Panicln("uncompress failed")
-		log.Panicln(err)
+		log.Println("uncompress failed")
+		log.Println(err)
 		return
 	}
 
@@ -347,15 +412,15 @@ func main() {
 	err = install(file_path)
 
 	if err != nil {
-		log.Panicln("install failed")
-		log.Panicln(err)
+		log.Println("install failed")
+		log.Println(err)
 		return
 	}
 
-	b := start(file_path)
+	// b := start(file_path)
 
-	if !b {
-		log.Panicln("start new MrPaint failed")
-		return
-	}
+	// if !b {
+	// 	log.Println("start new MrPaint failed")
+	// 	return
+	// }
 }
