@@ -25,10 +25,10 @@ import (
 )
 
 const (
-	SERVER_ADDR_IPV4           = projectconst.SERVER_ADDR_IPV4
-	SERVER_ADDR_IPV6           = projectconst.SERVER_ADDR_IPV6
-	DEFAULT_NEW_PACKAGE        = projectconst.DEFAULT_NEW_PACKAGE
-	UPDATER_VER                = projectconst.UPDATER_VER
+	SERVER_ADDR_IPV4    = projectconst.SERVER_ADDR_IPV4
+	SERVER_ADDR_IPV6    = projectconst.SERVER_ADDR_IPV6
+	DEFAULT_NEW_PACKAGE = projectconst.DEFAULT_NEW_PACKAGE
+	UPDATER_VER         = projectconst.UPDATER_VER
 )
 
 var to_be_killed uint64
@@ -149,7 +149,7 @@ func complete() (bool, error) {
 
 	// NOTE: to_be_installed is surrounded by quotes
 	// to_be_installed = strings.Replace(to_be_installed, "\"", "", -1)
-	to_be_installed = to_be_installed[1:len(to_be_installed)-1]
+	to_be_installed = to_be_installed[1 : len(to_be_installed)-1]
 
 	info, err := os.Stat(to_be_installed)
 	if err != nil || !info.IsDir() {
@@ -256,7 +256,7 @@ func download(address string) (bool, *os.File, error) {
 		log.Println("failed to download new package")
 		return false, nil, err
 	}
-	f, err := ioutil.TempFile("", "paintty_update_")
+	f, err := ioutil.TempFile("./", "paintty_update_")
 	if err != nil {
 		log.Println("failed to write new package to disk")
 		return false, nil, err
@@ -298,7 +298,7 @@ func install(src string) error {
 	}
 
 	s := string(os.PathSeparator)
-	new_updater := filepath.FromSlash(src + s + "updater" + platform.GetPlatformExcSuffix() )
+	new_updater := filepath.FromSlash(src + s + "updater" + platform.GetPlatformExcSuffix())
 	log.Println("new updater: ", new_updater)
 	pid := os.Getpid()
 
@@ -309,8 +309,8 @@ func install(src string) error {
 
 	// args := []string{"-i", "\""+current_path+"\"", "-p", strconv.Itoa(pid)}
 	// log.Println("start cmd: ", args)
-	// var procAttr os.ProcAttr 
- //    procAttr.Files = []*os.File{nil, nil, nil} 
+	// var procAttr os.ProcAttr
+	//    procAttr.Files = []*os.File{nil, nil, nil}
 	// prcs, err := os.StartProcess(new_updater, args, &procAttr)
 	// if err != nil {
 	// 	return err
@@ -332,7 +332,7 @@ func install(src string) error {
 
 func start(src string) bool {
 	// _, err := os.StartProcess(src+"MrPaint.exe", []string{}, nil)
-	cmd := exec.Command(src+"MrPaint"+platform.GetPlatformExcSuffix())
+	cmd := exec.Command(src + "MrPaint" + platform.GetPlatformExcSuffix())
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
