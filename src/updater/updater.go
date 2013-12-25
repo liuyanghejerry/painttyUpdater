@@ -256,7 +256,7 @@ func download(address string) (bool, *os.File, error) {
 		log.Println("failed to download new package")
 		return false, nil, err
 	}
-	f, err := ioutil.TempFile("./", "paintty_update_")
+	f, err := ioutil.TempFile("", "paintty_update_")
 	if err != nil {
 		log.Println("failed to write new package to disk")
 		return false, nil, err
