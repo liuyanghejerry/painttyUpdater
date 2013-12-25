@@ -20,3 +20,13 @@ func GetPlatformArch() (ret string) {
 	}
 	return ret
 }
+
+func GetPlatformExcSuffix() (ret string) {
+	switch runtime.GOOS {
+	case "windows":
+		ret = ".exe"
+	default:
+		ret = ""
+	}
+	return ret
+}

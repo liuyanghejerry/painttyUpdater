@@ -21,13 +21,14 @@ import (
 	"strconv"
 	"strings"
 	//"time"
+	"fmt"
 )
 
 const (
 	SERVER_ADDR_IPV4           = projectconst.SERVER_ADDR_IPV4
 	SERVER_ADDR_IPV6           = projectconst.SERVER_ADDR_IPV6
 	DEFAULT_NEW_PACKAGE        = projectconst.DEFAULT_NEW_PACKAGE
-	UPDATER_VER         uint64 = projectconst.UPDATER_VER
+	UPDATER_VER                = projectconst.UPDATER_VER
 )
 
 var to_be_killed uint64
@@ -297,7 +298,7 @@ func install(src string) error {
 	}
 
 	s := string(os.PathSeparator)
-	new_updater := filepath.FromSlash(src + s + "updater.exe")
+	new_updater := filepath.FromSlash(src + s + "updater" + platform.GetPlatformExcSuffix() )
 	log.Println("new updater: ", new_updater)
 	pid := os.Getpid()
 
@@ -331,7 +332,7 @@ func install(src string) error {
 
 func start(src string) bool {
 	// _, err := os.StartProcess(src+"MrPaint.exe", []string{}, nil)
-	cmd := exec.Command(src+"MrPaint.exe")
+	cmd := exec.Command(src+"MrPaint"+platform.GetPlatformExcSuffix())
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
@@ -358,7 +359,7 @@ func init() {
 	}
 	log.SetOutput(lf)
 
-	log.Println("my cmd: ", to_be_installed, to_be_killed, last_version)
+	fmt.Println("my cmd: ", to_be_installed, to_be_killed, last_version)
 }
 
 func main() {
