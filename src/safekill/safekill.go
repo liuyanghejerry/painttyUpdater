@@ -1,8 +1,9 @@
-// +build linux,darwin,!cgo,!windows
+// +build linux darwin
+// +build !cgo !windows
 
 package safekill
 
-import "os"
+// import "os"
 import "syscall"
 
 // send SIGINT if on unix-like system
