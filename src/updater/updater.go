@@ -37,6 +37,7 @@ const (
 var to_be_killed uint64
 var to_be_installed string
 var last_version uint64
+var log_file *os.File
 
 type VersionCheckReq struct {
 	Request  string `json:"request"`
@@ -361,11 +362,11 @@ func init() {
 		}()
 	}
 
-	lf, err := os.OpenFile("./updater.log", os.O_APPEND|os.O_CREATE, 0755)
+	log_file, err := os.OpenFile("./updater.log", os.O_RDONLY|os.O_APPEND|os.O_CREATE, 0755)
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 	}
-	log.SetOutput(lf)
+	log.SetOutput(log_file)
 
 	fmt.Println("my cmd: ", to_be_installed, to_be_killed, last_version)
 }
@@ -432,4 +433,5 @@ func main() {
 	// 	log.Println("start new MrPaint failed")
 	// 	return
 	// }
+	defer log_file.Close()
 }
