@@ -25,6 +25,7 @@ import (
 	"syscall"
 	//"time"
 	"fmt"
+	"path"
 )
 
 const (
@@ -147,6 +148,7 @@ func complete() (bool, error) {
 
 	// NOTE: to_be_installed is surrounded by quotes
 	// to_be_installed = strings.Replace(to_be_installed, "\"", "", -1)
+	// FIXME: seems like Mac OSX doesn't provides quotes?
 	// to_be_installed = to_be_installed[1 : len(to_be_installed)-1]
 
 	info, err := os.Stat(to_be_installed)
@@ -169,6 +171,10 @@ func complete() (bool, error) {
 		return false, err
 	}
 
+	current_path = platform.GetPlatformExecRoot(current_path)
+	original_install_path := to_be_installed
+	to_be_installed = platform.GetPlatformExecRoot(to_be_installed)
+
 	log.Println("copying ", current_path, " to ", to_be_installed)
 
 	result := CopyDir(current_path, to_be_installed)
@@ -178,7 +184,7 @@ func complete() (bool, error) {
 			"Cannot copy files from " + current_path + " to " + to_be_installed}
 	}
 
-	b := start(to_be_installed)
+	b := start(original_install_path)
 
 	if !b {
 		log.Println("start new MrPaint failed")
@@ -292,8 +298,7 @@ func install(src string) error {
 		}
 	}
 
-	s := string(os.PathSeparator)
-	new_updater := filepath.FromSlash(src + s + "updater" + platform.GetPlatformExcSuffix())
+	new_updater := filepath.FromSlash(platform.GetPlatformExec(src, "updater"))
 	log.Println("new updater: ", new_updater)
 	pid := os.Getpid()
 
@@ -327,7 +332,9 @@ func install(src string) error {
 
 func start(src string) bool {
 	// _, err := os.StartProcess(src+"MrPaint.exe", []string{}, nil)
-	cmd := exec.Command(src + "MrPaint" + platform.GetPlatformExcSuffix())
+	// cmd := exec.Command(src + "MrPaint" + platform.GetPlatformExcSuffix())
+	fmt.Println(src)
+	cmd := exec.Command(path.Join(src, "MrPaint" + platform.GetPlatformExcSuffix()))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()

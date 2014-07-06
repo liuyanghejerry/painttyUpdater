@@ -1,6 +1,9 @@
 package platform
 
-import "runtime"
+import (
+		"runtime"
+		"path"
+)
 
 func GetPlatformName() string {
 	if runtime.GOOS == "darwin" {
@@ -27,6 +30,26 @@ func GetPlatformExcSuffix() (ret string) {
 		ret = ".exe"
 	default:
 		ret = ""
+	}
+	return ret
+}
+
+func GetPlatformExec(dir string, exec string) (ret string) {
+	switch runtime.GOOS {
+	case "darwin":
+		ret = path.Join(dir, "MrPaint.app", "Contents", "MacOS", exec)
+	default:
+		ret = path.Join(dir, exec + GetPlatformExcSuffix())
+	}
+	return ret
+}
+
+func GetPlatformExecRoot(dir string) (ret string) {
+	switch runtime.GOOS {
+	case "darwin":
+		ret = path.Join(dir, "..", "..")
+	default:
+		ret = dir
 	}
 	return ret
 }
